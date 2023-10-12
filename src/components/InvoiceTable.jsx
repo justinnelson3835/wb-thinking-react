@@ -6,23 +6,80 @@ import DescriptionCell from './DescriptionCell';
 import TableHeader from './TableHeader';
 import AddButton from './AddButton';
 import TableRow from './TableRow';
+import { useState } from 'react';
+import axios from 'axios';
+
+let globalId = 4
 
 const InvoiceTable = ({ initialInvoiceData }) => {
 
-    const rows = initialInvoiceData.map((invoiceItem) => {
+    const [currentData, setCurrentData] = useState(initialInvoiceData)
 
-        const { id, description, rate, hours } = invoiceItem
+    const rows = currentData.map((invoiceItem) => {
+
+        const { id, description, rate, hours, isEditing } = invoiceItem
+
    
 
-    return(
-
+    return (
         <TableRow 
         key={id}
+        id={id}
         initialInvoiceData={{ description, rate, hours }}
-        initialIsEditing={false}
+        initialIsEditing={isEditing}
+        deleteFunc={() => deleteRow(id)}
         />
-    )
+    ) 
 })
+
+// addRow function to pass <AddButton /> to give it the ability to add a new object (row) to our currentData array
+
+const addRow = async () => {
+
+    const response = await axios.post('/addInvoice', {description: "Job Description Here"})
+
+    response.data
+
+    setCurrentData([...currentData, response.data])
+
+    // get a copy of the current data
+   // const newInvoiceData = [...currentData]
+
+    // create a new "blank" object for the new row (modeled after each element in TEST_DATA)
+   //  const newRow = {
+   //     id: globalId,
+   //     description: 'Description',
+   //     rate: '',
+   //     hours: '',
+   //     isEditing: true
+    //} 
+
+    // add newRow object to the end of our copy of currentData:
+    // newInvoiceData.push(newRow)
+
+    // call setCurrentData to change the state of currentData
+    // setCurrentData(newInvoiceData)
+
+    // all above can be done with this instead
+    // setCurrentData([...currentData, newRow])
+
+    // globalId++
+}
+
+    // delete function to pass to each <TableRow /> components
+    const deleteRow = async (itemId) => {
+
+        const response = await axios.delete(`/deleteInvoice/${itemId}`)
+
+        if (!response.data.error) { //if the response did not throw an error
+
+            //using the given id, find the corresponding element in currentData and remove it
+        const filteredList = currentData.filter((invoiceItem) => invoiceItem.id !== itemId)
+
+        setCurrentData(filteredList)
+
+        }
+    }
 
     return (
         <div>
@@ -35,7 +92,7 @@ const InvoiceTable = ({ initialInvoiceData }) => {
                         {rows}
 
                     </tbody>
-                <tfoot><AddButton /></tfoot>
+                <tfoot><AddButton addClick={addRow} /></tfoot>
             </table>
         </div>
 
